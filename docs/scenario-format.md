@@ -6,8 +6,16 @@ Both are YAML. See `examples/coffee-subscription/` for a complete pair.
 
 ```yaml
 title: Ridgeway Roasters subscription launch     # required
-brand_name: Ridgeway Roasters                     # author of the pinned announcement
 language: English                                 # language of posts, survey answers and report
+
+brand:                                            # the company's official account
+  name: Ridgeway Roasters                         # author of the pinned announcement
+  replies: facts                                  # facts (default) | free | silent
+  active_hours: 9-18                              # when it checks the forum (default 9-18)
+  activity: 0.6                                   # chance of checking in an active hour (default 0.7)
+  facts: |                                        # what it may say beyond the offers
+    Beans ship within 3 days of roasting and the roast date is printed on every bag.
+    Bags are 12 oz only for now; no larger sizes yet.
 
 platform: >                                       # required: where the conversation happens
   A public online forum for home coffee enthusiasts in the United States...
@@ -48,6 +56,16 @@ questions:                                        # optional: replaces the defau
   - id: main_objection
     text: What is the main thing holding you back?
 ```
+
+### The company account
+
+The company takes part in the discussion with its own account, the way a founder would answer in a forum:
+
+- `facts` answers only from the published offers and `brand.facts`. Anything else gets an honest "not defined yet". Nothing is invented on your behalf, so write down the answers you already have.
+- `free` lets it improvise like a founder: decide details, make concessions, promise things. Useful to explore what customers would ask for, but it speaks for you without your approval. The report lists everything it said so you can review it.
+- `silent` never replies. Personas are told nobody from the company answers there. Expect "nobody answered" to become an objection.
+
+The company account is not surveyed and does not count in the results. `brand_name` at the top level still works as a shortcut for `brand.name`.
 
 Tips:
 

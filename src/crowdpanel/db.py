@@ -38,7 +38,8 @@ CREATE TABLE IF NOT EXISTS personas (
     data_json TEXT NOT NULL,
     stance TEXT NOT NULL DEFAULT '',
     notes_json TEXT NOT NULL DEFAULT '[]',
-    activations INTEGER NOT NULL DEFAULT 0
+    activations INTEGER NOT NULL DEFAULT 0,
+    role TEXT NOT NULL DEFAULT 'customer'
 );
 CREATE TABLE IF NOT EXISTS posts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -145,7 +146,20 @@ class Database:
         self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.execute("PRAGMA foreign_keys=ON")
         self.conn.executescript(SCHEMA)
+        self._migrate()
         self.conn.commit()
+
+    def _migrate(self) -> None:
+        """Adds columns introduced after a database file was created."""
+        added = {
+            "personas": [("role", "TEXT NOT NULL DEFAULT 'customer'")],
+            "simulations": [("baseline", "INTEGER NOT NULL DEFAULT 1")],
+        }
+        for table, columns in added.items():
+            have = {r["name"] for r in self.conn.execute(f"PRAGMA table_info({table})")}
+            for name, decl in columns:
+                if name not in have:
+                    self.conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {decl}")
 
     def close(self) -> None:
         self.conn.close()

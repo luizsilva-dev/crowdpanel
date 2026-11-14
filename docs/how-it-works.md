@@ -6,7 +6,7 @@
 2. **First impressions.** Before anyone posts, each persona answers the survey alone, seeing only the offer and its own situation. Skip it with `--no-baseline`.
 3. **Rounds.** Each round is one simulated hour, from `--hours` start to end, for `--days` days. In each round:
    - scheduled `events` for that hour are posted as news;
-   - each persona whose `active_hours` include the hour wakes up with probability `activity` (seeded, so a resumed run picks the same people);
+   - each persona whose `active_hours` include the hour wakes up with probability `activity` (seeded, so a resumed run picks the same people), and so does the company account unless it is `silent`;
    - every awake persona gets its feed, built before anyone acts, so people online at the same time see the same state;
    - all awake personas are called in parallel, each in a separate call that only contains its own profile, memory and feed;
    - their actions are checked and applied in random order;
@@ -64,6 +64,10 @@ Actions that point to posts or people that do not exist are dropped. At most `--
 - Failed calls are retried twice with a pause. A persona that still fails just misses that turn; if more than half of a round fails, the run stops as failed with the last error.
 - Errors that retrying cannot fix (not logged in, invalid key, unknown model) stop the run right away.
 - `--max-calls` and `--max-cost` are checked before every round; when reached, the run pauses and `resume` continues from the same round.
+
+## The company account
+
+The company plays its own role with a separate system prompt: the offers, the facts you wrote and the rules of its mode (`facts`, `free` or `silent`, see [scenario-format.md](scenario-format.md)). It sees the same kind of feed, keeps a running summary of what it has said, and replies to specific comments. Its turns are logged as `brand` calls, it is never surveyed, and the report has a section with everything it said, so you can check what was promised in your name.
 
 ## Interviews
 

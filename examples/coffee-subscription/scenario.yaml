@@ -1,7 +1,21 @@
 # Fictional example. Ridgeway Roasters does not exist.
 title: Ridgeway Roasters subscription launch
-brand_name: Ridgeway Roasters
 language: English
+
+brand:
+  name: Ridgeway Roasters
+  # facts: answers only from the offers and the facts below; free: improvises like a founder;
+  # silent: never replies
+  replies: facts
+  active_hours: 9-18
+  activity: 0.6
+  facts: |
+    Beans ship within 3 days of roasting and the roast date is printed on every bag.
+    Bags are 12 oz only for now; no larger sizes yet.
+    You can change the shipping address of any upcoming box online, so gifts are possible.
+    Prices for current subscribers are locked for 12 months.
+    Customer support is by email, answered on business days.
+    There is no office or wholesale plan yet.
 
 platform: >
   A public online forum for home coffee enthusiasts in the United States. People share brewing

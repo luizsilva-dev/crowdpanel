@@ -82,8 +82,9 @@ def parse_hours(text: str) -> tuple[int, int]:
     return a, b
 
 
-def print_estimate(engine: Engine, personas, days: int, start: int, end: int, baseline: bool = True) -> None:
-    est = estimate(personas, days, start, end, baseline)
+def print_estimate(engine: Engine, personas, days: int, start: int, end: int, baseline: bool = True,
+                   scenario=None) -> None:
+    est = estimate(personas, days, start, end, baseline, scenario)
     say(f"Engine: {engine.describe()}")
     say(f"About {est['calls']} model calls ({est['activations']} persona turns + surveys + report), "
         f"roughly {est['input_tokens'] / 1e6:.1f}M input and {est['output_tokens'] / 1e6:.2f}M output tokens.")
@@ -130,7 +131,7 @@ async def cmd_run(args: argparse.Namespace, db: Database) -> int:
     opts = engine_options(args)
     engine = make_engine(args.engine or "claude-code", args.model, opts)
     try:
-        print_estimate(engine, personas, args.days, start, end, not args.no_baseline)
+        print_estimate(engine, personas, args.days, start, end, not args.no_baseline, scenario)
         if not confirm(args):
             return 1
         sim_id = create_simulation(
@@ -161,7 +162,7 @@ async def cmd_ab(args: argparse.Namespace, db: Database) -> int:
     seed = args.seed if args.seed is not None else int(datetime.now().timestamp()) % 100000
     try:
         personas = load_personas(args.personas)
-        print_estimate(engine, personas * 2, args.days, start, end, not args.no_baseline)
+        print_estimate(engine, personas * 2, args.days, start, end, not args.no_baseline, scenario)
         if not confirm(args):
             return 1
         ids = []

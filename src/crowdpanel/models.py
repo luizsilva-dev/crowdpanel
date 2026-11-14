@@ -80,6 +80,12 @@ class Scenario:
     offers: list[Offer]
     language: str = "English"
     brand_name: str = "the company"
+    # how the company account behaves in the forum: facts (answers only from brand_facts and the
+    # offers), free (improvises like a founder; the report lists what it promised) or silent
+    brand_replies: str = "facts"
+    brand_facts: str = ""
+    brand_activity: float = 0.7
+    brand_hours: list[int] = field(default_factory=lambda: list(range(9, 19)))
     announcement: str = ""
     questions: list[Question] = field(default_factory=list)
     events: list[Event] = field(default_factory=list)

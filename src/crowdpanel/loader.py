@@ -36,6 +36,15 @@ def default_questions(offers: list[Offer]) -> list[Question]:
     return qs
 
 
+def parse_hours(value: Any, default: list[int]) -> list[int]:
+    if not value:
+        return default
+    if isinstance(value, str) and "-" in value:
+        start, end = (int(x) for x in value.split("-", 1))
+        return list(range(start, end + 1))
+    return [int(h) for h in value]
+
+
 def parse_scenario(data: dict[str, Any]) -> Scenario:
     if not isinstance(data, dict):
         raise ConfigError("scenario must be a YAML mapping")
@@ -80,13 +89,27 @@ def parse_scenario(data: dict[str, Any]) -> Scenario:
             author=str(raw.get("author", "")),
         ))
 
+    brand = data.get("brand") or {}
+    if not isinstance(brand, dict):
+        raise ConfigError("'brand' must be a mapping")
+    replies = str(brand.get("replies", "facts"))
+    if replies not in ("facts", "free", "silent"):
+        raise ConfigError("brand.replies must be facts, free or silent")
+    brand_activity = float(brand.get("activity", 0.7))
+    if not 0 <= brand_activity <= 1:
+        raise ConfigError("brand.activity must be between 0 and 1")
+
     return Scenario(
         title=str(data["title"]),
         platform=str(data["platform"]).strip(),
         context=str(data["context"]).strip(),
         offers=offers,
         language=str(data.get("language", "English")),
-        brand_name=str(data.get("brand_name", "the company")),
+        brand_name=str(brand.get("name") or data.get("brand_name") or "the company"),
+        brand_replies=replies,
+        brand_facts=str(brand.get("facts", "")).strip(),
+        brand_activity=brand_activity,
+        brand_hours=parse_hours(brand.get("active_hours"), list(range(9, 19))),
         announcement=str(data.get("announcement", "")).strip(),
         questions=questions,
         events=events,
@@ -112,10 +135,7 @@ def parse_personas(data: Any) -> list[Persona]:
         if name.lower() in seen:
             raise ConfigError(f"duplicated persona name: {name}")
         seen.add(name.lower())
-        hours = raw.get("active_hours") or list(range(8, 23))
-        if isinstance(hours, str) and "-" in hours:
-            start, end = (int(x) for x in hours.split("-", 1))
-            hours = list(range(start, end + 1))
+        hours = parse_hours(raw.get("active_hours"), list(range(8, 23)))
         activity = float(raw.get("activity", 0.5))
         if not 0 <= activity <= 1:
             raise ConfigError(f"persona {name}: activity must be between 0 and 1")

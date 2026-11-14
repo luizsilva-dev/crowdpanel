@@ -212,3 +212,52 @@ async def test_idle_visits_do_not_fill_memory(db, scenario, personas):
     notes = [n for r in db.q("SELECT notes_json FROM personas WHERE simulation_id = ?", (sim_id,))
              for n in json.loads(r["notes_json"])]
     assert notes and all(n == "Someone compared prices." for n in notes)
+
+
+async def test_brand_account_replies_and_stays_out_of_survey(db, scenario, personas):
+    from crowdpanel.simulation import load_brand
+
+    engine = get_engine("fake", seed=17)
+    sim_id = create_simulation(db, scenario, personas, None, engine, days=1, seed=5)
+    brand = load_brand(db, sim_id)
+    assert brand is not None and brand.name == "Ridgeway Roasters"
+    await Runner(db, engine).run(sim_id)
+    assert db.one("SELECT author_id FROM posts WHERE kind = 'announcement' AND simulation_id = ?", (sim_id,))[0] == brand.id
+    assert db.one("SELECT COUNT(*) AS n FROM calls WHERE simulation_id = ? AND purpose = 'brand'", (sim_id,))["n"] > 0
+
+    await run_survey(db, engine, sim_id)
+    surveyed = {r["persona_id"] for r in db.q("SELECT persona_id FROM survey WHERE simulation_id = ?", (sim_id,))}
+    assert brand.id not in surveyed and len(surveyed) == len(personas)
+    assert aggregate(db, sim_id)["respondents"] == len(personas)
+
+
+async def test_silent_brand_never_acts(db, scenario, personas):
+    from crowdpanel.simulation import load_brand
+
+    scenario.brand_replies = "silent"
+    engine = get_engine("fake", seed=17)
+    sim_id = create_simulation(db, scenario, personas, None, engine, days=1, seed=5)
+    assert load_brand(db, sim_id) is None
+    await Runner(db, engine).run(sim_id)
+    assert db.one("SELECT COUNT(*) AS n FROM calls WHERE simulation_id = ? AND purpose = 'brand'", (sim_id,))["n"] == 0
+
+
+def test_brand_prompts_follow_the_mode(scenario):
+    from crowdpanel import prompts
+
+    facts = prompts.brand_system(scenario, scenario.offers, 3)
+    assert "roast date is printed" in facts and "Never invent" in facts
+    scenario.brand_replies = "free"
+    assert "Never invent" not in prompts.brand_system(scenario, scenario.offers, 3)
+    assert "official account here (@ridgeway_roasters)" in prompts.community_system(scenario, 3)
+    scenario.brand_replies = "silent"
+    assert "does not answer in this forum" in prompts.community_system(scenario, 3)
+
+
+def test_brand_mode_is_validated():
+    import pytest
+    from crowdpanel.loader import ConfigError, parse_scenario
+
+    with pytest.raises(ConfigError):
+        parse_scenario({"title": "x", "platform": "y", "context": "z", "offers": [{"description": "d"}],
+                        "brand": {"replies": "sometimes"}})

@@ -11,8 +11,19 @@ def offers_text(offers: list[Offer]) -> str:
     return "\n\n".join(f"{o.name}:\n{o.description}" for o in offers)
 
 
+def brand_handle(scenario: Scenario) -> str:
+    return Persona(name=scenario.brand_name, profile="").handle()
+
+
 def community_system(scenario: Scenario, max_actions: int) -> str:
     # Identical for every persona and every round, so API engines can cache it.
+    if scenario.brand_replies == "silent":
+        brand_line = (f"{scenario.brand_name} does not answer in this forum. If you already asked something, "
+                      "do not ask it again; discuss it with the others or move on.")
+    else:
+        brand_line = (f"{scenario.brand_name} has an official account here ({brand_handle(scenario)}) and sometimes "
+                      "replies. React to its answers like a real customer would: accept, doubt or push back. "
+                      "Do not repeat a question you already asked.")
     return f"""You play members of an online community in a simulation that explores how real people react to a business offer. In each message you play exactly one person, described there. You only know what that person knows: their background, what they remember and the posts in front of them.
 
 THE PLACE
@@ -27,7 +38,7 @@ HOW TO PLAY
 - Write the way this person writes online. Length, tone, slang and small typos must fit who they are. Most comments are one to three sentences.
 - Do not repeat what others already said. Add something new: a doubt, a question, a number, a comparison, a story, a joke, a counterpoint.
 - Talk to the other members, not only to {scenario.brand_name}: answer them, agree, push back, build on what they said. Address people by their @handle.
-- {scenario.brand_name} does not answer in this forum. If you already asked something, do not ask it again; discuss it with the others or move on.
+- {brand_line}
 - Start your own thread when you have something new to share: a comparison, an experience, a calculation, a question for the group.
 - Doing nothing is a normal choice when nothing in the feed matters to this person.
 - Never say this is a simulation and never mention being an AI.
@@ -92,6 +103,54 @@ def activation_prompt(persona: Persona, opinion: str, notes: list[str], own_writ
         + f"\n\nIt is day {day}, {hour:02d}:00. You open the community and see:\n\n{feed}\n\n"
         + f"Decide what {persona.name} does now."
     )
+
+
+def brand_system(scenario: Scenario, offers: list[Offer], max_actions: int) -> str:
+    facts = scenario.brand_facts or "(nothing beyond the offers above)"
+    if scenario.brand_replies == "free":
+        rules = ("- You may go beyond the facts like a real founder would: decide details, make reasonable concessions "
+                 "and commitments when they help the business. Be realistic about what a small company can deliver; "
+                 "every commitment you make will be held against the company.")
+    else:
+        rules = ("- Only state what is in the offers and in the facts below. When asked something they do not cover, "
+                 "say plainly that it is not defined yet or that you will check. Never invent prices, dates, "
+                 "features, guarantees or policies.")
+    return f"""You run the official account of {scenario.brand_name} ({brand_handle(scenario)}) in an online community, in a simulation that explores how customers react to a business offer.
+
+THE PLACE
+{scenario.platform}
+
+WHAT PEOPLE HERE ALREADY KNOW
+{scenario.context}
+
+THE OFFER(S) YOU PUBLISHED
+{offers_text(offers)}
+
+WHAT THE COMPANY CAN SAY
+{facts}
+
+HOW TO BEHAVE
+{rules}
+- Be brief, polite and human. No marketing speak, no pressure, no arguing with customers.
+- Prioritize questions addressed to you and doubts that keep coming back. You do not need to answer every comment, and you can stay quiet when there is nothing to add.
+- Answer a specific comment with comment + reply_to. Do not repeat an answer you already gave; point to it instead.
+- Never say this is a simulation and never mention being an AI.
+- Write in {scenario.language}.
+- In "opinion", keep a running summary of what the company has answered or committed to so far.
+
+ACTIONS (at most {max_actions} per turn): create_post, comment, like, nothing. Leave unused fields as null."""
+
+
+def brand_prompt(scenario: Scenario, summary: str, notes: list[str], own_writing: list[str],
+                 day: int, hour: int, feed: str) -> str:
+    lines = [f"You are the official account of {scenario.brand_name}.", "",
+             "WHAT THE COMPANY HAS SAID OR COMMITTED TO SO FAR", summary or "Nothing yet."]
+    if notes:
+        lines += ["", "NOTES"] + [f"- {n}" for n in notes]
+    if own_writing:
+        lines += ["", "WHAT YOU WROTE RECENTLY"] + [f"- {w}" for w in own_writing]
+    return ("\n".join(lines) + f"\n\nIt is day {day}, {hour:02d}:00. You check the community:\n\n{feed}\n\n"
+            f"Decide how {scenario.brand_name} responds now.")
 
 
 def survey_system(scenario: Scenario) -> str:
@@ -165,6 +224,7 @@ Write the report in {language}, in Markdown. Do not add a title; start with the 
 5. Who was most and least receptive, and why
 6. How the discussion moved people
 7. What to test next
+8. What the company said and promised (only when the company account replied): how its answers landed, and every commitment it made, quoted, since the founder never approved them
 
 When first impressions are available, compare them with the answers after the discussion: say who changed and which posts or arguments seem to have moved them, and point out when the crowd converged on one view, since that can be groupthink rather than a real preference."""
 

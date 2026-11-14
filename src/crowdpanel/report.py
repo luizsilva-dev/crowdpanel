@@ -21,12 +21,20 @@ def activity_stats(db: Database, sim_id: int) -> dict[str, Any]:
         "SELECT p.name, p.stance, p.activations, "
         " (SELECT COUNT(*) FROM posts x WHERE x.author_id = p.id) AS posts, "
         " (SELECT COUNT(*) FROM comments c WHERE c.author_id = p.id) AS comments "
-        "FROM personas p WHERE p.simulation_id = ? ORDER BY p.name",
+        "FROM personas p WHERE p.simulation_id = ? AND p.role = 'customer' ORDER BY p.name",
         (sim_id,),
+    )
+    brand_said = db.q(
+        "SELECT c.id, c.post_id, c.reply_to, c.content, c.round FROM comments c JOIN personas p ON p.id = c.author_id "
+        "WHERE c.simulation_id = ? AND p.role = 'brand' "
+        "UNION ALL SELECT x.id, NULL, NULL, x.content, x.round FROM posts x JOIN personas p ON p.id = x.author_id "
+        "WHERE x.simulation_id = ? AND p.role = 'brand' AND x.kind != 'announcement' ORDER BY 5",
+        (sim_id, sim_id),
     )
     return {
         "posts": posts, "comments": comments, "likes": likes,
         "personas": [dict(r) for r in per_persona],
+        "brand": [dict(r) for r in brand_said],
     }
 
 
@@ -56,6 +64,7 @@ def _material(db: Database, sim_id: int, agg: dict, stats: dict, threads: list[d
         "OFFER(S) DISCUSSED:\n" + prompts.offers_text(offers),
         f"ACTIVITY: {stats['posts']} posts, {stats['comments']} comments, {stats['likes']} likes "
         f"from {len(personas)} personas.",
+        _brand_material(scenario, stats),
         "FINAL OPINION OF EACH PERSONA:\n" + "\n".join(
             f"- {p['name']} ({seg.get(p['name'], '')}): {p['stance'] or '(never formed one)'}" for p in stats["personas"]
         ),
@@ -83,6 +92,16 @@ def _choice_table(q: dict) -> list[str]:
     return out
 
 
+def _brand_material(scenario: Any, stats: dict) -> str:
+    if scenario.brand_replies == "silent":
+        return f"THE COMPANY: {scenario.brand_name} did not take part in the discussion."
+    mode = ("answers limited to the published offer and these facts:\n" + (scenario.brand_facts or "(none)")
+            if scenario.brand_replies == "facts" else
+            "free to improvise like a founder, so its commitments were NOT approved by the real company")
+    said = "\n".join(f"- {clip(b['content'], 500)}" for b in stats["brand"]) or "(it never replied)"
+    return f"THE COMPANY ACCOUNT ({scenario.brand_name}), {mode}\nWHAT IT SAID:\n{said}"
+
+
 def stats_markdown(db: Database, sim_id: int, agg: dict, stats: dict, before: dict | None = None,
                    shifts: list | None = None) -> str:
     sim = db.simulation(sim_id)
@@ -93,7 +112,8 @@ def stats_markdown(db: Database, sim_id: int, agg: dict, stats: dict, before: di
         f"- Engine: {sim['engine']} ({sim['model']})",
         f"- Simulated time: {sim['days']} day(s), {sim['start_hour']:02d}:00 to {sim['end_hour']:02d}:00, "
         f"{sim['current_round']} of {sim['total_rounds']} rounds",
-        f"- Activity: {stats['posts']} posts, {stats['comments']} comments, {stats['likes']} likes",
+        f"- Activity: {stats['posts']} posts, {stats['comments']} comments, {stats['likes']} likes"
+        + (f", {len(stats['brand'])} of them from the company" if stats.get("brand") else ""),
         f"- Model calls: {spent.get('calls', 0)} ({spent.get('errors') or 0} failed), "
         f"{spent.get('input', 0) + spent.get('cached', 0):,} input tokens, {spent.get('output', 0):,} output tokens"
         + (f", about ${spent['cost']:.2f}" if spent.get("cost") else ""),
@@ -130,6 +150,11 @@ def stats_markdown(db: Database, sim_id: int, agg: dict, stats: dict, before: di
                 out.append(f"- **{sh['name']}** ({sh['segment']}): {changes}")
         else:
             out.append("Nobody changed their choice or score.")
+    if stats.get("brand"):
+        sim_scenario = load_simulation(db, sim_id)[1]
+        label = "improvised, not approved by you" if sim_scenario.brand_replies == "free" else "limited to your facts"
+        out += ["", f"## What {sim_scenario.brand_name} said in the discussion ({label})", ""]
+        out += [f"- {b['content']}" for b in stats["brand"]]
     out += ["", "## Final opinion of each persona", ""]
     out += [f"- **{p['name']}** ({p['posts']} posts, {p['comments']} comments): {p['stance'] or '(none)'}"
             for p in stats["personas"]]

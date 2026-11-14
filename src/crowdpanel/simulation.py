@@ -30,6 +30,8 @@ def scenario_to_dict(s: Scenario) -> dict[str, Any]:
     return {
         "title": s.title, "platform": s.platform, "context": s.context, "language": s.language,
         "brand_name": s.brand_name, "announcement": s.announcement,
+        "brand": {"name": s.brand_name, "replies": s.brand_replies, "facts": s.brand_facts,
+                  "activity": s.brand_activity, "active_hours": s.brand_hours},
         "offers": [asdict(o) for o in s.offers],
         "questions": [asdict(q) for q in s.questions],
         "events": [asdict(e) for e in s.events],
@@ -69,27 +71,48 @@ def create_simulation(db: Database, scenario: Scenario, personas: list[Persona],
             "INSERT INTO personas (simulation_id, name, data_json) VALUES (?, ?, ?)",
             (sim_id, p.name, dumps(p.to_dict())),
         )
+    if scenario.brand_replies != "silent":
+        brand = brand_persona(scenario)
+        db.run(
+            "INSERT INTO personas (simulation_id, name, data_json, role) VALUES (?, ?, ?, 'brand')",
+            (sim_id, brand.name, dumps(brand.to_dict())),
+        )
     db.commit()
     return sim_id
+
+
+def brand_persona(scenario: Scenario) -> Persona:
+    return Persona(name=scenario.brand_name, profile=f"Official account of {scenario.brand_name}.", segment="company",
+                   activity=scenario.brand_activity, active_hours=scenario.brand_hours)
+
+
+def _persona_from_row(pr: Any) -> Persona:
+    p = Persona(**json.loads(pr["data_json"]))
+    p.id = pr["id"]
+    return p
+
+
+def load_brand(db: Database, sim_id: int) -> Persona | None:
+    row = db.one("SELECT * FROM personas WHERE simulation_id = ? AND role = 'brand'", (sim_id,))
+    return _persona_from_row(row) if row else None
 
 
 def load_simulation(db: Database, sim_id: int) -> tuple[Any, Scenario, list[Offer], list[Persona]]:
     row = db.simulation(sim_id)
     scenario = parse_scenario(json.loads(row["scenario_json"]))
     offers = [scenario.offer(o) for o in json.loads(row["offer_ids"])]
-    personas = []
-    for pr in db.q("SELECT * FROM personas WHERE simulation_id = ? ORDER BY id", (sim_id,)):
-        data = json.loads(pr["data_json"])
-        p = Persona(**data)
-        p.id = pr["id"]
-        personas.append(p)
+    personas = [_persona_from_row(pr) for pr in db.q(
+        "SELECT * FROM personas WHERE simulation_id = ? AND role = 'customer' ORDER BY id", (sim_id,))]
     return row, scenario, offers, personas
 
 
 def estimate(personas: list[Persona], days: int, start_hour: int, end_hour: int,
-             baseline: bool = True) -> dict[str, float]:
+             baseline: bool = True, scenario: Scenario | None = None) -> dict[str, float]:
     hours = range(start_hour, end_hour + 1)
-    per_day = sum(p.activity for p in personas for h in hours if h in p.active_hours)
+    crowd = list(personas)
+    if scenario is not None and scenario.brand_replies != "silent":
+        crowd.append(brand_persona(scenario))
+    per_day = sum(p.activity for p in crowd for h in hours if h in p.active_hours)
     activations = per_day * days
     surveys = len(personas) * (2 if baseline else 1)
     calls = activations + surveys + 1
@@ -143,12 +166,13 @@ class Runner:
             ((opinion or stance).strip(), dumps(notes), persona.id),
         )
 
-    def _seed(self, world: World, scenario: Scenario, offers: list[Offer], start_hour: int) -> None:
+    def _seed(self, world: World, scenario: Scenario, offers: list[Offer], start_hour: int,
+              brand: Persona | None = None) -> None:
         if self.db.one("SELECT 1 FROM posts WHERE simulation_id = ? AND kind = 'announcement'", (world.sim_id,)):
             return
         text = scenario.announcement or f"{scenario.brand_name} presents:"
         body = text + "\n\n" + prompts.offers_text(offers)
-        world.add_post(0, 1, start_hour, None, scenario.brand_name, body, kind="announcement")
+        world.add_post(0, 1, start_hour, brand, scenario.brand_name, body, kind="announcement")
 
     def _budget_reached(self, sim: Any) -> str | None:
         spent = self.db.spend(sim["id"])
@@ -163,11 +187,13 @@ class Runner:
         if sim["status"] == "done":
             self.progress("Simulation already finished.")
             return "done"
-        world = World(self.db, sim_id, personas)
+        brand = load_brand(self.db, sim_id)
+        world = World(self.db, sim_id, personas + ([brand] if brand else []))
         system = prompts.community_system(scenario, sim["max_actions"])
+        brand_system = prompts.brand_system(scenario, offers, sim["max_actions"])
         semaphore = asyncio.Semaphore(sim["parallel"])
         self.db.set_status(sim_id, "running")
-        self._seed(world, scenario, offers, sim["start_hour"])
+        self._seed(world, scenario, offers, sim["start_hour"], brand)
         self.db.commit()
 
         if sim["baseline"] and sim["current_round"] == 0:
@@ -186,11 +212,16 @@ class Runner:
 
         async def activate(p: Persona, round_no: int, day: int, hour: int, feed: str) -> tuple[Persona, Any]:
             opinion, notes = self._memory(p)
-            prompt = prompts.activation_prompt(p, opinion, notes, world.own_writing(p), day, hour, feed)
+            if brand is not None and p.id == brand.id:
+                purpose, sys_prompt = "brand", brand_system
+                prompt = prompts.brand_prompt(scenario, opinion, notes, world.own_writing(p, 5), day, hour, feed)
+            else:
+                purpose, sys_prompt = "activation", system
+                prompt = prompts.activation_prompt(p, opinion, notes, world.own_writing(p), day, hour, feed)
             async with semaphore:
                 try:
-                    res = await call_with_retry(self.db, self.engine, sim_id, round_no, p.id, "activation",
-                                                system, prompt, prompts.ACTION_SCHEMA, max_tokens=3000)
+                    res = await call_with_retry(self.db, self.engine, sim_id, round_no, p.id, purpose,
+                                                sys_prompt, prompt, prompts.ACTION_SCHEMA, max_tokens=3000)
                     return p, res.data
                 except EngineError as e:
                     return p, e
@@ -213,6 +244,8 @@ class Runner:
 
                 rng = random.Random(f"{sim['seed']}-{round_no}")
                 awake = [p for p in personas if hour in p.active_hours and rng.random() < p.activity]
+                if brand is not None and hour in brand.active_hours and rng.random() < brand.activity:
+                    awake.append(brand)
                 if not awake:
                     self.db.run("UPDATE simulations SET current_round = ? WHERE id = ?", (round_no + 1, sim_id))
                     self.db.commit()

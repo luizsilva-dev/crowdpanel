@@ -108,7 +108,10 @@ def create_app(db_path: str) -> FastAPI:
         try:
             sim, scenario, offers, personas = load_simulation(db, sim_id)
             spent = db.spend(sim_id)
-            by_id = {p.id: p for p in personas}
+            from ..simulation import load_brand
+
+            brand = load_brand(db, sim_id)
+            by_id = {p.id: p for p in personas + ([brand] if brand else [])}
             posts = []
             for p in db.q("SELECT * FROM posts WHERE simulation_id = ? ORDER BY id DESC", (sim_id,)):
                 author = by_id.get(p["author_id"])
@@ -124,7 +127,8 @@ def create_app(db_path: str) -> FastAPI:
                               "segment": author.segment if author else ""})
             people = [
                 {**dict(r), "segment": by_id[r["id"]].segment}
-                for r in db.q("SELECT id, name, stance, activations FROM personas WHERE simulation_id = ? ORDER BY name", (sim_id,))
+                for r in db.q("SELECT id, name, stance, activations FROM personas WHERE simulation_id = ? "
+                              "AND role = 'customer' ORDER BY name", (sim_id,))
             ]
             interviews = [dict(r) for r in db.q(
                 "SELECT i.*, p.name FROM interviews i JOIN personas p ON p.id = i.persona_id "

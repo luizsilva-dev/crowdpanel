@@ -2,7 +2,7 @@
 
 Put your offer in front of a crowd of simulated customers before you build it.
 
-crowdpanel creates a small online community of personas (each one with a name, a background, a budget, a temperament and their own memory), posts your offer in it and lets them talk for a few simulated days: they comment, argue, compare, do the math, react to news and change their minds. At the end every persona answers a short survey, and a report sums up what they liked, what held them back and which angles you had not considered.
+crowdpanel creates a small online community of personas (each one with a name, a background, a budget, a temperament and their own memory), posts your offer in it and lets them talk for a few simulated days: they comment, argue, compare, do the math, react to news and change their minds. Your company can take part too, answering only with the facts you give it, improvising like a founder, or staying silent. At the end every persona answers a short survey, and a report sums up what they liked, what held them back and which angles you had not considered.
 
 Before the discussion each persona gives a first impression alone, so the report can show who changed their mind and what moved them, and flag when the crowd simply converged.
 
@@ -29,6 +29,7 @@ What it does differently:
 | | MiroFish | crowdpanel |
 |---|---|---|
 | Who takes part | Entities extracted from a document by the model; people mentioned only in passing can be dropped | The personas you list (or generate and review), exactly |
+| The company | Becomes an agent like any other and can promise things on your behalf | Answers only from facts you wrote by default; improvising is opt-in and every reply is listed in the report |
 | Memory | Every past turn is resent on every call, so prompts and cost keep growing | Current opinion, last 8 notes and the last 3 things each persona wrote: the prompt stays the same size |
 | Platforms | Twitter-like and Reddit-like in parallel, two calls per action | One forum, one call per turn |
 | Simulated time | Starts at midnight, many empty rounds | Only the hours you choose |
