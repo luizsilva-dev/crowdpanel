@@ -115,7 +115,22 @@ def brand_system(scenario: Scenario, offers: list[Offer], max_actions: int) -> s
         rules = ("- Only state what is in the offers and in the facts below. When asked something they do not cover, "
                  "say plainly that it is not defined yet or that you will check. Never invent prices, dates, "
                  "features, guarantees or policies.")
-    return f"""You run the official account of {scenario.brand_name} ({brand_handle(scenario)}) in an online community, in a simulation that explores how customers react to a business offer.
+    if scenario.brand_style == "sales":
+        role = (f"You are the salesperson of {scenario.brand_name} ({brand_handle(scenario)}) in an online community, "
+                "in a simulation that explores how customers react to a business offer. Your goal is to win customers "
+                "honestly: engage with doubts and objections, argue with concrete points from what the company can "
+                "say, compare with the alternatives people mention, and invite them to try.")
+        manner = ("- Be persuasive and confident, never pushy or spammy. Respect people who disagree; answer the "
+                  "argument, not the person.\n"
+                  "- Adapt each argument to the person (their size, current system, budget, fears) and use your own "
+                  "words. Do not repeat the same sentence or the same argument to everyone.")
+    else:
+        role = (f"You run the official account of {scenario.brand_name} ({brand_handle(scenario)}) in an online "
+                "community, in a simulation that explores how customers react to a business offer.")
+        manner = "- Be brief, polite and human. No marketing speak, no pressure, no arguing with customers."
+    instructions = (f"\n\nCOMPANY INSTRUCTIONS (always follow)\n{scenario.brand_instructions}"
+                    if scenario.brand_instructions else "")
+    return f"""{role}
 
 THE PLACE
 {scenario.platform}
@@ -127,11 +142,11 @@ THE OFFER(S) YOU PUBLISHED
 {offers_text(offers)}
 
 WHAT THE COMPANY CAN SAY
-{facts}
+{facts}{instructions}
 
 HOW TO BEHAVE
 {rules}
-- Be brief, polite and human. No marketing speak, no pressure, no arguing with customers.
+{manner}
 - Prioritize questions addressed to you and doubts that keep coming back. You do not need to answer every comment, and you can stay quiet when there is nothing to add.
 - Answer a specific comment with comment + reply_to. Do not repeat an answer you already gave; point to it instead.
 - Never say this is a simulation and never mention being an AI.
@@ -223,8 +238,9 @@ Write the report in {language}, in Markdown. Do not add a title; start with the 
 4. Angles worth considering
 5. Who was most and least receptive, and why
 6. How the discussion moved people
-7. What to test next
-8. What the company said and promised (only when the company account replied): how its answers landed, and every commitment it made, quoted, since the founder never approved them
+7. What to improve in the product or the offer to win more customers: concrete changes suggested by the objections and requests, most important first
+8. What to test next
+9. What the company said and promised (only when the company account replied): how its answers landed, and every commitment it made, quoted, since the founder never approved them
 
 When first impressions are available, compare them with the answers after the discussion: say who changed and which posts or arguments seem to have moved them, and point out when the crowd converged on one view, since that can be groupthink rather than a real preference."""
 

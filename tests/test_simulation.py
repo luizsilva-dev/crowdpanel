@@ -261,3 +261,20 @@ def test_brand_mode_is_validated():
     with pytest.raises(ConfigError):
         parse_scenario({"title": "x", "platform": "y", "context": "z", "offers": [{"description": "d"}],
                         "brand": {"replies": "sometimes"}})
+
+
+def test_sales_style_instructions_and_facts_file(tmp_path):
+    from crowdpanel import prompts
+    from crowdpanel.loader import load_scenario
+
+    (tmp_path / "kit.md").write_text("Plans start at $9.90 a month.", encoding="utf-8")
+    (tmp_path / "s.yaml").write_text(
+        "title: x\nplatform: y\ncontext: z\noffers:\n  - description: d\n"
+        "brand:\n  name: Acme Hosting\n  style: sales\n  facts: Founded in 2009.\n  facts_file: kit.md\n"
+        "  instructions: Never mention the internal stack.\n", encoding="utf-8")
+    s = load_scenario(tmp_path / "s.yaml")
+    assert "Founded in 2009." in s.brand_facts and "$9.90" in s.brand_facts
+    text = prompts.brand_system(s, s.offers, 3)
+    assert "salesperson" in text and "Never mention the internal stack." in text
+    s.brand_style = "support"
+    assert "salesperson" not in prompts.brand_system(s, s.offers, 3)

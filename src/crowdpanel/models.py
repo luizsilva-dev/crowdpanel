@@ -86,6 +86,8 @@ class Scenario:
     brand_facts: str = ""
     brand_activity: float = 0.7
     brand_hours: list[int] = field(default_factory=lambda: list(range(9, 19)))
+    brand_style: str = "support"  # support (answers questions) or sales (also argues and handles objections)
+    brand_instructions: str = ""
     announcement: str = ""
     questions: list[Question] = field(default_factory=list)
     events: list[Event] = field(default_factory=list)

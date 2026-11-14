@@ -13,6 +13,10 @@ brand:                                            # the company's official accou
   replies: facts                                  # facts (default) | free | silent
   active_hours: 9-18                              # when it checks the forum (default 9-18)
   activity: 0.6                                   # chance of checking in an active hour (default 0.7)
+  style: support                                  # support (default) or sales: argues and handles objections
+  instructions: |                                 # rules it always follows (tone, things never to say)
+    Never discuss the internal tech stack.
+  facts_file: sales-kit.md                        # optional: long material, path relative to this file
   facts: |                                        # what it may say beyond the offers
     Beans ship within 3 days of roasting and the roast date is printed on every bag.
     Bags are 12 oz only for now; no larger sizes yet.
@@ -64,6 +68,8 @@ The company takes part in the discussion with its own account, the way a founder
 - `facts` answers only from the published offers and `brand.facts`. Anything else gets an honest "not defined yet". Nothing is invented on your behalf, so write down the answers you already have.
 - `free` lets it improvise like a founder: decide details, make concessions, promise things. Useful to explore what customers would ask for, but it speaks for you without your approval. The report lists everything it said so you can review it.
 - `silent` never replies. Personas are told nobody from the company answers there. Expect "nobody answered" to become an objection.
+
+`style: sales` turns the account into a salesperson: it engages with objections, argues with points from the facts, compares with the alternatives people mention and adapts each argument to the person. Put long material (a sales kit, product docs, an objection playbook) in `facts_file`, and rules it must always follow in `instructions`.
 
 The company account is not surveyed and does not count in the results. `brand_name` at the top level still works as a shortcut for `brand.name`.
 

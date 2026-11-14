@@ -45,7 +45,7 @@ def parse_hours(value: Any, default: list[int]) -> list[int]:
     return [int(h) for h in value]
 
 
-def parse_scenario(data: dict[str, Any]) -> Scenario:
+def parse_scenario(data: dict[str, Any], base_dir: str | Path | None = None) -> Scenario:
     if not isinstance(data, dict):
         raise ConfigError("scenario must be a YAML mapping")
     for key in ("title", "platform", "context", "offers"):
@@ -95,6 +95,17 @@ def parse_scenario(data: dict[str, Any]) -> Scenario:
     replies = str(brand.get("replies", "facts"))
     if replies not in ("facts", "free", "silent"):
         raise ConfigError("brand.replies must be facts, free or silent")
+    style = str(brand.get("style", "support"))
+    if style not in ("support", "sales"):
+        raise ConfigError("brand.style must be support or sales")
+    facts = str(brand.get("facts", "")).strip()
+    if brand.get("facts_file"):
+        path = Path(str(brand["facts_file"]))
+        if not path.is_absolute() and base_dir is not None:
+            path = Path(base_dir) / path
+        if not path.exists():
+            raise ConfigError(f"brand.facts_file not found: {path}")
+        facts = (facts + "\n\n" + path.read_text(encoding="utf-8").strip()).strip()
     brand_activity = float(brand.get("activity", 0.7))
     if not 0 <= brand_activity <= 1:
         raise ConfigError("brand.activity must be between 0 and 1")
@@ -107,7 +118,9 @@ def parse_scenario(data: dict[str, Any]) -> Scenario:
         language=str(data.get("language", "English")),
         brand_name=str(brand.get("name") or data.get("brand_name") or "the company"),
         brand_replies=replies,
-        brand_facts=str(brand.get("facts", "")).strip(),
+        brand_facts=facts,
+        brand_style=style,
+        brand_instructions=str(brand.get("instructions", "")).strip(),
         brand_activity=brand_activity,
         brand_hours=parse_hours(brand.get("active_hours"), list(range(9, 19))),
         announcement=str(data.get("announcement", "")).strip(),
@@ -117,7 +130,7 @@ def parse_scenario(data: dict[str, Any]) -> Scenario:
 
 
 def load_scenario(path: str | Path) -> Scenario:
-    return parse_scenario(_read_yaml(path))
+    return parse_scenario(_read_yaml(path), base_dir=Path(path).resolve().parent)
 
 
 def parse_personas(data: Any) -> list[Persona]:
