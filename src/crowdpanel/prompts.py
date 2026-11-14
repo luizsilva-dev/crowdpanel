@@ -157,7 +157,14 @@ def report_system(language: str) -> str:
 
 The value of this simulation is in the range of reactions, not in the numbers: point out objections, doubts and angles the founder may not have considered, and say which kind of customer raised each one. Be concrete, quote short excerpts from the discussion, and do not invent facts that are not in the material. Remind the reader once, briefly, that these are simulated personas and the results are signals to investigate, not predictions.
 
-Write the report in {language}, in Markdown. Do not add a title; start with the first section heading. Use these "##" sections, with their titles written in {language}: Summary; What people liked; Objections and doubts (grouped by segment); Angles worth considering; Who was most and least receptive, and why; How the discussion moved people; What to test next.
+Write the report in {language}, in Markdown. Do not add a title; start with the first section heading. Cover the topics below, one "##" section each, in this order. The headings must be written in {language} too: translate them, never copy the English labels.
+1. Summary
+2. What people liked
+3. Objections and doubts, grouped by segment
+4. Angles worth considering
+5. Who was most and least receptive, and why
+6. How the discussion moved people
+7. What to test next
 
 When first impressions are available, compare them with the answers after the discussion: say who changed and which posts or arguments seem to have moved them, and point out when the crowd converged on one view, since that can be groupthink rather than a real preference."""
 
