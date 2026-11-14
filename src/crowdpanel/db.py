@@ -141,7 +141,8 @@ CREATE INDEX IF NOT EXISTS calls_sim ON calls (simulation_id);
 class Database:
     def __init__(self, path: str | Path = "crowdpanel.db"):
         self.path = str(path)
-        self.conn = sqlite3.connect(self.path)
+        # several runs (and the web interface) can share one file; wait for a lock instead of failing
+        self.conn = sqlite3.connect(self.path, timeout=30)
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.execute("PRAGMA foreign_keys=ON")
