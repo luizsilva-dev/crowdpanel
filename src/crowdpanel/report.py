@@ -151,6 +151,7 @@ async def build_report(db: Database, engine: Engine, sim_id: int, language: str 
         "[crowdpanel](https://github.com/luizsilva-dev/crowdpanel). Personas are simulated: read this as a "
         "map of possible reactions, not as a forecast.",
         "",
+        "",
     ]
     body = ""
     if narrative:
