@@ -247,7 +247,9 @@ class Runner:
                         (sim_id, round_no, p.id, data.get("thought", ""), data.get("opinion", ""),
                          data.get("memory_note", ""), actions_json(done)),
                     )
-                    self._remember(p, data.get("opinion", ""), data.get("memory_note", ""))
+                    # an idle visit leaves no note, so "nothing new" lines don't push real memories out
+                    acted = any(d["type"] != "nothing" for d in done)
+                    self._remember(p, data.get("opinion", ""), data.get("memory_note", "") if acted else "")
                 self.db.run("UPDATE simulations SET current_round = ? WHERE id = ?", (round_no + 1, sim_id))
                 self.db.commit()
                 note = f", {failed} failed" if failed else ""

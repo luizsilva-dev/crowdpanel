@@ -40,7 +40,7 @@ Posts show the last few comments, so personas can answer each other. A persona n
 Each persona keeps:
 
 - its current opinion of the offer, rewritten by the persona at every turn;
-- the last 8 one-line notes it chose to remember;
+- the last 8 one-line notes it chose to remember, taken only from turns where it did something, so idle visits do not push real memories out;
 - the last 3 things it wrote.
 
 This keeps every call about the same size no matter how long the simulation runs, which is what keeps the cost linear.

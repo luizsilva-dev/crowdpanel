@@ -63,7 +63,7 @@ ACTION_SCHEMA = {
             },
         },
         "opinion": {"type": "string", "description": "This person's current opinion about the offer, in one sentence."},
-        "memory_note": {"type": "string", "description": "One short line worth remembering from this moment."},
+        "memory_note": {"type": "string", "description": "One short line worth remembering from this moment: a fact, an argument, who said what. Empty string when nothing new happened."},
     },
     "required": ["thought", "actions", "opinion", "memory_note"],
     "additionalProperties": False,

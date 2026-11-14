@@ -184,3 +184,31 @@ async def test_baseline_can_be_skipped(db, scenario, personas):
     sim_id = create_simulation(db, scenario, personas, None, engine, days=1, seed=6, baseline=False)
     await Runner(db, engine).run(sim_id)
     assert db.one("SELECT COUNT(*) AS n FROM survey WHERE simulation_id = ?", (sim_id,))["n"] == 0
+
+
+class IdleThenActiveEngine(Engine):
+    name = "idle"
+
+    def __init__(self, *a, **k):
+        super().__init__(*a, **k)
+        self.turn = 0
+
+    async def generate(self, system, prompt, schema=None, max_tokens=4000):
+        self.turn += 1
+        if "SURVEY" in prompt:
+            from crowdpanel.engines.fake import FakeEngine
+            return await FakeEngine().generate(system, prompt, schema)
+        act = self.turn % 3 == 0
+        actions = [{"type": "comment" if act else "nothing", "post_id": 1, "reply_to": None, "handle": None,
+                    "content": "A real point." if act else None}]
+        note = "Someone compared prices." if act else "Nothing new in the feed."
+        return Result(text="", data={"thought": "", "opinion": "ok", "memory_note": note, "actions": actions})
+
+
+async def test_idle_visits_do_not_fill_memory(db, scenario, personas):
+    engine = IdleThenActiveEngine("x")
+    sim_id = create_simulation(db, scenario, personas, None, engine, days=2, seed=3, baseline=False)
+    await Runner(db, engine).run(sim_id)
+    notes = [n for r in db.q("SELECT notes_json FROM personas WHERE simulation_id = ?", (sim_id,))
+             for n in json.loads(r["notes_json"])]
+    assert notes and all(n == "Someone compared prices." for n in notes)
