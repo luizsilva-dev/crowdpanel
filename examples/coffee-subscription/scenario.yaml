@@ -1,0 +1,40 @@
+# Fictional example. Ridgeway Roasters does not exist.
+title: Ridgeway Roasters subscription launch
+brand_name: Ridgeway Roasters
+language: English
+
+platform: >
+  A public online forum for home coffee enthusiasts in the United States. People share brewing
+  setups, review beans and roasters, complain about prices and help beginners. Threads about new
+  subscriptions get a lot of attention and a fair amount of skepticism.
+
+context: |
+  Ridgeway Roasters is a small specialty roaster from Asheville, North Carolina, roasting since 2016.
+  Until now it only sold single bags online ($18.50 for 12 oz, shipping $6.95, free above $45).
+  Big brands sell supermarket coffee at $9 to $12 per 12 oz bag. Other specialty roasters run
+  subscriptions between $19 and $26 per bag with free shipping. Many forum members already had
+  subscriptions they cancelled because of stale beans, rigid schedules or hard cancellation.
+
+announcement: |
+  We are finally launching a subscription. Fresh beans roasted the week they ship, free shipping,
+  and you pick the origin or let us surprise you. Here is what we are thinking about:
+
+offers:
+  - id: a
+    name: Monthly plan
+    description: |
+      $22.90 per 12 oz bag, shipped every 2 or 4 weeks, free shipping. Pause, skip or cancel
+      online at any time, no fee.
+  - id: b
+    name: Prepaid year
+    description: |
+      $219 paid upfront for 12 bags (about $18.25 each), one bag every 4 weeks, free shipping,
+      plus a free hand grinder in the first box. Refund for unshipped bags only in the first 30 days.
+
+events:
+  - day: 2
+    hour: 11
+    author: Coffee Industry Daily
+    content: |
+      A national coffee chain announced a home delivery subscription at $14.99 per 12 oz bag,
+      roasted to order, with the first month free.

@@ -1,0 +1,112 @@
+# Fictional people for the example scenario.
+personas:
+  - name: Jennifer Miller
+    age: 38
+    location: Columbus, Ohio
+    occupation: Nurse, rotating shifts
+    segment: casual drinker
+    personality: Friendly, practical, writes short posts, hates anything that takes effort to cancel.
+    profile: >
+      Drinks two cups a day, mostly drip coffee. Buys whatever is on sale at Kroger, around $10 a bag.
+      Got burned by a meal kit subscription that kept charging her after she cancelled.
+    activity: 0.35
+    active_hours: 6-9
+  - name: Marcus Thompson
+    age: 29
+    location: Denver, Colorado
+    occupation: Software developer
+    segment: enthusiast
+    personality: Detail oriented, quotes numbers, a bit of a coffee snob but fair.
+    profile: >
+      Owns an espresso machine and a Niche grinder. Buys from three specialty roasters, about four bags
+      a month, spends close to $90 a month on beans. Cares about roast date and traceability.
+    activity: 0.7
+    active_hours: 18-23
+  - name: Linda Garcia
+    age: 61
+    location: Tucson, Arizona
+    occupation: Retired school teacher
+    segment: budget conscious
+    personality: Polite, thoughtful, asks questions before buying, shares coupons with others.
+    profile: >
+      Fixed income, one pot of coffee every morning with her husband. Spends about $30 a month on coffee.
+      Curious about specialty coffee but thinks $20 a bag is a lot.
+    activity: 0.45
+    active_hours: 8-15
+  - name: Kevin O'Brien
+    age: 44
+    location: Boston, Massachusetts
+    occupation: Owns a small accounting firm
+    segment: office buyer
+    personality: Direct, busy, thinks in terms of cost per cup and invoices.
+    profile: >
+      Buys coffee for an office of 9 people, about 10 bags a month. Wants predictable billing and
+      someone to call when an order goes wrong. Currently uses a local distributor.
+    activity: 0.4
+    active_hours: 8-17
+  - name: Ashley Nguyen
+    age: 26
+    location: Austin, Texas
+    occupation: Barista and part time student
+    segment: enthusiast
+    personality: Enthusiastic, opinionated, writes with emojis now and then, roasts bad coffee publicly.
+    profile: >
+      Works at a third wave cafe, gets beans at a discount from work but likes trying new roasters at home.
+      Money is tight, would never prepay a year.
+    activity: 0.65
+    active_hours: 12-23
+  - name: Robert Wilson
+    age: 55
+    location: Charlotte, North Carolina
+    occupation: Sales manager
+    segment: gift buyer
+    personality: Warm, talkative, likes supporting local businesses.
+    profile: >
+      Has bought Ridgeway bags at the Asheville farmers market. Looks for gifts for his clients and his
+      son, who just moved to Seattle. Likes the idea of a grinder included.
+    activity: 0.4
+    active_hours: 7-21
+  - name: Priya Patel
+    age: 33
+    location: Jersey City, New Jersey
+    occupation: Product manager
+    segment: subscription skeptic
+    personality: Analytical, sarcastic, reads the fine print and points out catches.
+    profile: >
+      Cancelled three coffee subscriptions in the last two years: one for stale beans, one for surprise
+      price increases, one because she could not skip a month while traveling.
+    activity: 0.6
+    active_hours: 19-23
+  - name: Tyler Brooks
+    age: 22
+    location: Lincoln, Nebraska
+    occupation: College student
+    segment: beginner
+    personality: Curious, asks basic questions, easily convinced by the last person who replied.
+    profile: >
+      Just bought his first pour over setup. Has no idea what origin or roast level he likes.
+      Budget around $20 a month for coffee.
+    activity: 0.5
+    active_hours: 10-23
+  - name: Angela Ruiz
+    age: 47
+    location: Atlanta, Georgia
+    occupation: Owns a small bakery
+    segment: small business
+    personality: Straight talker, generous with advice, hates waste.
+    profile: >
+      Serves drip coffee at her bakery, about 25 lbs a month. Has tried two local roasters and left one
+      because deliveries came late. Would consider a roaster that can ship larger bags.
+    activity: 0.35
+    active_hours: 5-13
+  - name: Brian Kowalski
+    age: 39
+    location: Milwaukee, Wisconsin
+    occupation: Electrician
+    segment: casual drinker
+    personality: Laid back, jokes a lot, distrusts hype and "fancy" coffee talk.
+    profile: >
+      Drinks a lot of coffee from a big thermos on job sites. Thinks most specialty coffee is overpriced
+      but his wife got him into a medium roast from a local shop.
+    activity: 0.3
+    active_hours: 17-22

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ sim.name }}{% endblock %}
+{% block head %}{% if running %}<meta http-equiv="refresh" content="8">{% endif %}{% endblock %}
+{% block body %}
+<h1>{{ sim.name }}</h1>
+<p>
+  <span class="badge {{ sim.status }}">{{ sim.status }}</span>
+  <span class="muted">round {{ sim.current_round }}/{{ sim.total_rounds }}, {{ sim.engine }} ({{ sim.model }}),
+  {{ spent.calls or 0 }} calls{% if spent.errors %} ({{ spent.errors }} failed){% endif %},
+  {{ "{:,}".format((spent.input or 0) + (spent.cached or 0)) }} in / {{ "{:,}".format(spent.output or 0) }} out tokens
+  {% if spent.cost %}, ${{ "%.2f"|format(spent.cost) }}{% endif %}</span>
+</p>
+{% if sim.error %}<p class="note">{{ sim.error }}</p>{% endif %}
+
+<div class="actions">
+  {% if running %}
+    <form method="post" action="/sim/{{ sim.id }}/stop"><button>Stop after this round</button></form>
+  {% elif sim.status != 'done' or not has_report %}
+    <form method="post" action="/sim/{{ sim.id }}/resume"><button>{{ 'Finish survey and report' if sim.status == 'done' else 'Resume' }}</button></form>
+  {% endif %}
+  {% if has_survey %}<a class="button" href="/sim/{{ sim.id }}/results">Results{% if has_report %} and report{% endif %}</a>{% endif %}
+</div>
+
+{% if log %}<pre class="log">{% for line in log %}{{ line }}
+{% endfor %}</pre>{% endif %}
+
+<form method="get" class="filters">
+  <select name="persona" onchange="this.form.submit()">
+    <option value="">Everyone</option>
+    {% for p in people %}<option {% if p.name == persona %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+  </select>
+  <select name="segment" onchange="this.form.submit()">
+    <option value="">All segments</option>
+    {% for s in segments %}<option {% if s == segment %}selected{% endif %}>{{ s }}</option>{% endfor %}
+  </select>
+</form>
+
+<div class="layout">
+  <section class="feed">
+    {% for p in posts %}
+    <article class="post {{ p.kind }}">
+      <header><strong>{{ p.author_name }}</strong>
+        {% if p.segment %}<span class="tag">{{ p.segment }}</span>{% endif %}
+        <span class="muted">#{{ p.id }}, day {{ p.day }} {{ "%02d"|format(p.hour) }}:00, {{ p.likes }} likes</span>
+        {% if p.kind == 'quote' %}<span class="muted">quoting #{{ p.quote_of }}</span>{% endif %}
+      </header>
+      <p class="content">{{ p.content }}</p>
+      {% for c in p.comments %}
+      <div class="comment"><strong>{{ c.author_name }}</strong> <span class="muted">c#{{ c.id }}{% if c.reply_to %} reply to c#{{ c.reply_to }}{% endif %}</span>
+        <p>{{ c.content }}</p></div>
+      {% endfor %}
+    </article>
+    {% else %}
+    <p class="muted">Nothing posted yet.</p>
+    {% endfor %}
+  </section>
+
+  <aside>
+    <h2>People</h2>
+    <ul class="people">
+      {% for p in people %}
+      <li><a href="?persona={{ p.name|urlencode }}"><strong>{{ p.name }}</strong></a> <span class="tag">{{ p.segment }}</span>
+        <p class="muted">{{ p.stance or 'No opinion yet.' }}</p></li>
+      {% endfor %}
+    </ul>
+
+    <h2 id="interviews">Ask</h2>
+    <form method="post" action="/sim/{{ sim.id }}/ask" class="card form">
+      <select name="persona"><option value="">Everyone</option>{% for p in people %}<option>{{ p.name }}</option>{% endfor %}</select>
+      <textarea name="question" rows="3" required placeholder="What would make you pay upfront?"></textarea>
+      <button>Ask</button>
+    </form>
+    {% for i in interviews %}
+    <div class="interview"><p class="muted">{{ i.name }}: {{ i.question }}</p><p>{{ i.answer }}</p></div>
+    {% endfor %}
+  </aside>
+</div>
+{% endblock %}

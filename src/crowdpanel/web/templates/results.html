@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Results: {{ sim.name }}{% endblock %}
+{% block body %}
+<p><a href="/sim/{{ sim.id }}">Back to the discussion</a></p>
+<h1>{{ sim.name }}</h1>
+<p class="muted">{{ agg.respondents }} respondents. Simulated personas: a map of possible reactions, not a forecast.</p>
+
+{% for q in agg.questions %}
+<section class="card">
+  <h2>{{ q.text }}</h2>
+  {% if q.type == 'choice' %}
+    {% if first.get(q.id) %}
+    <p class="muted">Before the discussion, each persona alone:</p>
+    {% set f = first[q.id] %}{% set ftotal = f.overall.values()|sum %}
+    {% for o in f.options %}
+      <div class="bar faded"><span class="label">{{ o }}</span>
+        <span class="track"><span class="fill" style="width: {{ (100 * f.overall[o] / ftotal) if ftotal else 0 }}%"></span></span>
+        <span class="num">{{ f.overall[o] }}</span></div>
+    {% endfor %}
+    <p class="muted">After the discussion:</p>
+    {% endif %}
+    {% set total = q.overall.values()|sum %}
+    {% for o in q.options %}
+      {% set n = q.overall[o] %}
+      <div class="bar"><span class="label">{{ o }}</span>
+        <span class="track"><span class="fill" style="width: {{ (100 * n / total) if total else 0 }}%"></span></span>
+        <span class="num">{{ n }}</span></div>
+    {% endfor %}
+    {% if q.by_segment %}
+    <details><summary>By segment</summary>
+      {% for s, counts in q.by_segment.items() %}
+      <p><strong>{{ s }}</strong>: {% for o, n in counts.items() if n %}{{ o }} {{ n }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+      {% endfor %}
+    </details>
+    {% endif %}
+  {% elif q.type in ('scale', 'number') %}
+    <p class="big">{{ q.average if q.average is not none else 'no answers' }}
+      {% if first.get(q.id) and first[q.id].average is not none %}<span class="muted small">was {{ first[q.id].average }} before the discussion</span>{% endif %}</p>
+    {% for s, v in q.by_segment.items() %}<p><strong>{{ s }}</strong>: {{ v }}</p>{% endfor %}
+  {% else %}
+    <ul class="answers">
+      {% for a in q.answers %}<li><strong>{{ a.name }}</strong> <span class="tag">{{ a.segment }}</span> {{ a.text }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+</section>
+{% endfor %}
+
+{% if first %}
+<section class="card">
+  <h2>Who changed their answer</h2>
+  {% for sh in shifts %}
+  <p><strong>{{ sh.name }}</strong> <span class="tag">{{ sh.segment }}</span>
+    {% for c in sh.changes %}{{ c.question }} {{ c.before }} → {{ c.after }}{% if not loop.last %}; {% endif %}{% endfor %}</p>
+  {% else %}
+  <p class="muted">Nobody changed their choice or score.</p>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if report %}
+<section class="card"><h2>Report</h2><pre class="report">{{ report }}</pre></section>
+{% endif %}
+{% endblock %}
