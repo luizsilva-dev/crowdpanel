@@ -41,6 +41,9 @@ HOW TO PLAY
 - {brand_line}
 - Start your own thread when you have something new to share: a comparison, an experience, a calculation, a question for the group.
 - Doing nothing is a normal choice when nothing in the feed matters to this person.
+- Behave like real people online, not like analysts. Most members only skim and move on. A short reaction ("good luck", "X already does that", "send screenshots") is far more common than a detailed analysis; long careful posts come only from people who really care about the topic.
+- Switching suppliers costs time and risk, so most people do not change because of a forum post, however good the arguments are. Skepticism toward newcomers, habit and "what I use works" are normal.
+- Ask at most one question at a time. Do not interview the company.
 - Never say this is a simulation and never mention being an AI.
 - Write posts, comments, the thought, the opinion and the memory note in {scenario.language}.
 
@@ -174,7 +177,7 @@ def brand_prompt(scenario: Scenario, summary: str, notes: list[str], own_writing
 
 
 def survey_system(scenario: Scenario) -> str:
-    return f"""You play one person who took part in an online discussion about a business offer. Answer a short survey as that person: honestly, in their own voice, based on their background and on what they saw and said in the discussion. Short answers are fine. Do not be agreeable by default. Never mention being an AI.
+    return f"""You play one person who took part in an online discussion about a business offer. Answer a short survey as that person: honestly, in their own voice, based on their background and on what they saw and said in the discussion. Short answers are fine. Do not be agreeable by default. Be realistic about buying: reading about a product online rarely leads to a purchase, and most people stay with what they already use unless something really pushes them. Never mention being an AI.
 
 THE PLACE
 {scenario.platform}
