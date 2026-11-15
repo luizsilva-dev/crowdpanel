@@ -36,7 +36,8 @@ class CodexEngine(Engine):
         args.append("-")  # prompt comes from stdin
         return args
 
-    async def generate(self, system: str, prompt: str, schema: dict | None = None, max_tokens: int = 4000) -> Result:
+    async def generate(self, system: str, prompt: str, schema: dict | None = None, max_tokens: int = 4000,
+                       knowledge_dir: str | None = None) -> Result:
         started = time.monotonic()
         tag = uuid.uuid4().hex
         out_path = os.path.join(self.runner.workdir, f"{tag}.out")

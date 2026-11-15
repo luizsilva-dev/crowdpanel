@@ -56,7 +56,8 @@ class FakeEngine(Engine):
             return None
         return self._sentence()
 
-    async def generate(self, system: str, prompt: str, schema: dict | None = None, max_tokens: int = 4000) -> Result:
+    async def generate(self, system: str, prompt: str, schema: dict | None = None, max_tokens: int = 4000,
+                       knowledge_dir: str | None = None) -> Result:
         from .base import EngineError
 
         self.calls += 1

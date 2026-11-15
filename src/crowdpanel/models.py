@@ -88,6 +88,7 @@ class Scenario:
     brand_hours: list[int] = field(default_factory=lambda: list(range(9, 19)))
     brand_style: str = "support"  # support (answers questions) or sales (also argues and handles objections)
     brand_instructions: str = ""
+    brand_knowledge_dir: str = ""  # folder the brand may read before answering (claude-code and codex engines)
     announcement: str = ""
     questions: list[Question] = field(default_factory=list)
     events: list[Event] = field(default_factory=list)

@@ -47,7 +47,8 @@ class AnthropicEngine(Engine):
             + u.output_tokens * self.price_out
         ) / 1_000_000
 
-    async def generate(self, system: str, prompt: str, schema: dict | None = None, max_tokens: int = 4000) -> Result:
+    async def generate(self, system: str, prompt: str, schema: dict | None = None, max_tokens: int = 4000,
+                       knowledge_dir: str | None = None) -> Result:
         sdk = self._sdk
         output_config: dict = {}
         if self.effort:

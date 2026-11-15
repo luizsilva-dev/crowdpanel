@@ -61,7 +61,10 @@ class Engine:
     def describe(self) -> str:
         return f"{self.name} ({self.model})" if self.model else self.name
 
-    async def generate(self, system: str, prompt: str, schema: dict | None = None, max_tokens: int = 4000) -> Result:
+    supports_knowledge = False  # can read files from a folder while answering
+
+    async def generate(self, system: str, prompt: str, schema: dict | None = None, max_tokens: int = 4000,
+                       knowledge_dir: str | None = None) -> Result:
         raise NotImplementedError
 
     async def close(self) -> None:

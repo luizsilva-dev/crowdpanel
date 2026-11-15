@@ -17,6 +17,8 @@ class ClaudeCodeEngine(Engine):
 
     name = "claude-code"
     default_parallel = 6
+    supports_knowledge = True
+    READ_ONLY_TOOLS = "Read,Grep,Glob"
 
     def default_model(self) -> str:
         return "haiku"
@@ -30,26 +32,32 @@ class ClaudeCodeEngine(Engine):
         drop = () if use_api_key else ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")
         self.runner = CliRunner("claude", timeout=timeout, env_drop=drop)
 
-    def build_args(self, system: str, schema: dict | None) -> list[str]:
+    def build_args(self, system: str, schema: dict | None, knowledge: bool = False) -> list[str]:
+        # with a knowledge folder the model may read and search it, never write or run anything
+        tools = self.READ_ONLY_TOOLS if knowledge else ""
         args = [
             "-p",
             "--model", self.model,
             "--system-prompt", system,
-            "--tools", "",
+            "--tools", tools,
             "--strict-mcp-config",
             "--setting-sources", "",
             "--no-session-persistence",
             "--output-format", "json",
         ]
+        if knowledge:
+            args += ["--allowedTools", self.READ_ONLY_TOOLS, "--max-turns", "25"]
         if self.effort:
             args += ["--effort", self.effort]
         if schema is not None:
             args += ["--json-schema", json.dumps(schema)]
         return args
 
-    async def generate(self, system: str, prompt: str, schema: dict | None = None, max_tokens: int = 4000) -> Result:
+    async def generate(self, system: str, prompt: str, schema: dict | None = None, max_tokens: int = 4000,
+                       knowledge_dir: str | None = None) -> Result:
         started = time.monotonic()
-        code, out, err = await self.runner.run(self.build_args(system, schema), prompt)
+        code, out, err = await self.runner.run(self.build_args(system, schema, bool(knowledge_dir)), prompt,
+                                               cwd=knowledge_dir)
         try:
             payload = json.loads(out)
         except json.JSONDecodeError:

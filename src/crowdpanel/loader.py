@@ -106,6 +106,14 @@ def parse_scenario(data: dict[str, Any], base_dir: str | Path | None = None) -> 
         if not path.exists():
             raise ConfigError(f"brand.facts_file not found: {path}")
         facts = (facts + "\n\n" + path.read_text(encoding="utf-8").strip()).strip()
+    knowledge_dir = ""
+    if brand.get("knowledge_dir"):
+        kd = Path(str(brand["knowledge_dir"])).expanduser()
+        if not kd.is_absolute() and base_dir is not None:
+            kd = Path(base_dir) / kd
+        if not kd.is_dir():
+            raise ConfigError(f"brand.knowledge_dir is not a folder: {kd}")
+        knowledge_dir = str(kd.resolve())
     brand_activity = float(brand.get("activity", 0.7))
     if not 0 <= brand_activity <= 1:
         raise ConfigError("brand.activity must be between 0 and 1")
@@ -121,6 +129,7 @@ def parse_scenario(data: dict[str, Any], base_dir: str | Path | None = None) -> 
         brand_facts=facts,
         brand_style=style,
         brand_instructions=str(brand.get("instructions", "")).strip(),
+        brand_knowledge_dir=knowledge_dir,
         brand_activity=brand_activity,
         brand_hours=parse_hours(brand.get("active_hours"), list(range(9, 19))),
         announcement=str(data.get("announcement", "")).strip(),

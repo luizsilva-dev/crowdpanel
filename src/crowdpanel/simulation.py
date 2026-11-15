@@ -32,7 +32,7 @@ def scenario_to_dict(s: Scenario) -> dict[str, Any]:
         "brand_name": s.brand_name, "announcement": s.announcement,
         "brand": {"name": s.brand_name, "replies": s.brand_replies, "facts": s.brand_facts,
                   "activity": s.brand_activity, "active_hours": s.brand_hours, "style": s.brand_style,
-                  "instructions": s.brand_instructions},
+                  "instructions": s.brand_instructions, "knowledge_dir": s.brand_knowledge_dir},
         "offers": [asdict(o) for o in s.offers],
         "questions": [asdict(q) for q in s.questions],
         "events": [asdict(e) for e in s.events],
@@ -127,12 +127,16 @@ def estimate(personas: list[Persona], days: int, start_hour: int, end_hour: int,
 
 async def call_with_retry(db: Database, engine: Engine, sim_id: int | None, round_no: int | None,
                           persona_id: int | None, purpose: str, system: str, prompt: str,
-                          schema: dict | None, max_tokens: int = 4000, tries: int = 3) -> Result:
+                          schema: dict | None, max_tokens: int = 4000, tries: int = 3,
+                          knowledge_dir: str | None = None) -> Result:
     last: Exception | None = None
     for attempt in range(tries):
         started = time.monotonic()
         try:
-            result = await engine.generate(system, prompt, schema, max_tokens=max_tokens)
+            if knowledge_dir:
+                result = await engine.generate(system, prompt, schema, max_tokens=max_tokens, knowledge_dir=knowledge_dir)
+            else:
+                result = await engine.generate(system, prompt, schema, max_tokens=max_tokens)
             db.log_call(sim_id, round_no, persona_id, purpose, engine.name, engine.model, result.usage, result.seconds)
             db.commit()
             return result
@@ -213,8 +217,10 @@ class Runner:
 
         async def activate(p: Persona, round_no: int, day: int, hour: int, feed: str) -> tuple[Persona, Any]:
             opinion, notes = self._memory(p)
+            knowledge = None
             if brand is not None and p.id == brand.id:
                 purpose, sys_prompt = "brand", brand_system
+                knowledge = scenario.brand_knowledge_dir or None
                 prompt = prompts.brand_prompt(scenario, opinion, notes, world.own_writing(p, 5), day, hour, feed)
             else:
                 purpose, sys_prompt = "activation", system
@@ -222,7 +228,8 @@ class Runner:
             async with semaphore:
                 try:
                     res = await call_with_retry(self.db, self.engine, sim_id, round_no, p.id, purpose,
-                                                sys_prompt, prompt, prompts.ACTION_SCHEMA, max_tokens=3000)
+                                                sys_prompt, prompt, prompts.ACTION_SCHEMA, max_tokens=3000,
+                                                knowledge_dir=knowledge)
                     return p, res.data
                 except EngineError as e:
                     return p, e

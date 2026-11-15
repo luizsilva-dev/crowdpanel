@@ -51,7 +51,8 @@ class OpenAIEngine(Engine):
         return (u.input_tokens * self.price_in + u.cached_input_tokens * self.price_in * 0.5
                 + u.output_tokens * self.price_out) / 1_000_000
 
-    async def generate(self, system: str, prompt: str, schema: dict | None = None, max_tokens: int = 4000) -> Result:
+    async def generate(self, system: str, prompt: str, schema: dict | None = None, max_tokens: int = 4000,
+                       knowledge_dir: str | None = None) -> Result:
         sdk = self._sdk
         kwargs = {}
         user = prompt

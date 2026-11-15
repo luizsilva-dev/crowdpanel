@@ -171,3 +171,16 @@ def test_openai_engine_needs_model(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "test")
     with pytest.raises(EngineError):
         get_engine("openai")
+
+
+def test_claude_code_knowledge_folder_is_read_only(monkeypatch, tmp_path):
+    import shutil as _sh
+    monkeypatch.setattr(_sh, "which", lambda name: "/usr/bin/true")
+    from crowdpanel.engines.claude_code import ClaudeCodeEngine
+
+    engine = ClaudeCodeEngine()
+    plain = engine.build_args("s", None)
+    assert plain[plain.index("--tools") + 1] == ""
+    with_kb = engine.build_args("s", None, knowledge=True)
+    assert with_kb[with_kb.index("--tools") + 1] == "Read,Grep,Glob"
+    assert with_kb[with_kb.index("--allowedTools") + 1] == "Read,Grep,Glob"

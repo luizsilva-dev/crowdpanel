@@ -130,6 +130,11 @@ def brand_system(scenario: Scenario, offers: list[Offer], max_actions: int) -> s
         manner = "- Be brief, polite and human. No marketing speak, no pressure, no arguing with customers."
     instructions = (f"\n\nCOMPANY INSTRUCTIONS (always follow)\n{scenario.brand_instructions}"
                     if scenario.brand_instructions else "")
+    if scenario.brand_knowledge_dir:
+        instructions += ("\n\nPRODUCT FILES\nYour working folder has the product's own files (code and documentation). "
+                         "When a question needs a detail you are not sure about, search them with Grep and Glob and read "
+                         "with Read before answering, so you answer how the product really works. Explain it to customers in "
+                         "plain words, never paste code, and never mention secrets, servers or internal infrastructure.")
     return f"""{role}
 
 THE PLACE

@@ -21,13 +21,13 @@ class CliRunner:
         self.workdir = tempfile.mkdtemp(prefix="crowdpanel-")
         self.env = {k: v for k, v in os.environ.items() if k not in env_drop}
 
-    async def run(self, args: list[str], stdin: str) -> tuple[int, str, str]:
+    async def run(self, args: list[str], stdin: str, cwd: str | None = None) -> tuple[int, str, str]:
         proc = await asyncio.create_subprocess_exec(
             self.binary, *args,
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            cwd=self.workdir,
+            cwd=cwd or self.workdir,
             env=self.env,
         )
         try:
